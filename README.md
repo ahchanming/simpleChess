@@ -1,11 +1,4 @@
-websocket demo
-本地测试能够使用
-
-jdk：1.7.0_45
-tomcat :7.0.52（lib下有tomcat7对websocket支持的jar）
-http://www.oschina.net/translate/java-ee-html5-websocket-example
-
-
-2013-03-03
-本地jdk 1.7.03 tomcat：7.0.52也能使用
-chat页面下 修改ws://localhost:8080/chat 修改为本地ip 实现局域网聊天
+room分支需求：
+1.增加roomId号，表示房间
+  1.1用户进入首页，有两个可能1是创建一个新的房间，2是进入一个已经存在的房间。
+2.对战页面增加显示自己是哪个颜色，房间号
