@@ -164,7 +164,7 @@
         }
 
         host = document.location.host;
-        host = "ws://" + host + "/chess";
+        host = "ws://" + host + "/chess?roomId=12";
         alert(host);
         var webSocket = new WebSocket(host);
         //var webSocket = new WebSocket('ws://localhost:8080/chess');
