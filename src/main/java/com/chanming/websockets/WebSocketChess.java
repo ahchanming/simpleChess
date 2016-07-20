@@ -1,4 +1,4 @@
-package com.byteslounge.websockets;
+package com.chanming.websockets;
 
 import com.chanming.common.Action;
 import com.chanming.common.ChessAction;
@@ -38,7 +38,7 @@ public class WebSocketChess {
         session_list =session.getOpenSessions();
         List<String> roomList = session.getRequestParameterMap().get("roomId");
         String roomId = roomList.get(0);
-
+        System.out.println("RoomId is" + roomId);
         if (message.startsWith("connect")){
             System.out.println("A new Client Connect");
             System.out.println("client Number is [" + session_list.size() + "]");
@@ -48,7 +48,7 @@ public class WebSocketChess {
                     if (room.enterRoom(session)){
                         session.getUserProperties().put("roomId", roomId);
                     }else{
-
+                        session.getBasicRemote().sendText("error");
                     }
                 }else{
                     Room room = new ChessRoom(roomId, 2);

@@ -47,6 +47,7 @@
                 context.stroke();
             }
         }
+
         function play(e) {//鼠标点击时发生
             if (allowPlay == false){
                 alert("游戏还没开始,请耐心等待咯");
@@ -65,17 +66,13 @@
             }
 
             if (isWhite) {
-//                isWhite = false;
-//                drawChess(1, x, y);
                 sendChessMsg("White", x, y);
             }
             else {
-//                isWhite = true;
-//                drawChess(2, x, y);
                 sendChessMsg("Black", x, y);
             }
-//            myTurn = false;
         }
+
         function drawChess(chess, x, y) {//参数为，棋（1为白棋，2为黑棋），数组位置
             if (isWell == true) {
                 alert("已经结束了，如果需要重新玩，请刷新");
@@ -93,6 +90,7 @@
                 judge(x, y, chess);
             }
         }
+
         function judge(x, y, chess) {//判断该局棋盘是否赢了
             var count1 = 0;
             var count2 = 0;
@@ -163,21 +161,31 @@
             }
         }
 
-        host = document.location.host;
-        host = "ws://" + host + "/chess?roomId=12";
-        alert(host);
-        var webSocket = new WebSocket(host);
-        //var webSocket = new WebSocket('ws://localhost:8080/chess');
 
-        window.onload=function(){
-            //alert("Windows On Load");
-            //alert(window.location.href);
-            //alert(document.location.host);
-            alert("OK");
+
+        var roomId = prompt("请输入房间号", ""); //房间号
+        host = document.location.host;
+        host = "ws://" + host + "/chess?roomId=" + roomId;
+        //alert(host);
+        var webSocket = new WebSocket(host);
+        i = 0;
+        while (!webSocket.readyState){
+            alert("请耐心等待游戏开始");
+            if (i > 5){
+                alert("游戏链接失败");
+                break;
+            }
+            i++;
+        };
+
+        function sendStart(){
             webSocket.send("connect|This is a new Client");
         }
 
+        sendStart();
+
         webSocket.onmessage = function(event) {
+            //alert("readMessage" + event.data);
             onMessage(event)
         };
 
@@ -198,6 +206,8 @@
             }else{
                 myTurn = false;
             }
+            changeHead();
+            changeTip();
         }
 
         function sendChessMsg(color, x, y){
@@ -239,6 +249,13 @@
             }
         }
 
+        function changeHead(){
+            if (myTurn == false){
+                document.getElementById("head").innerHTML = "你的房间号为" + roomId + "你是黑色";
+            }else{
+                document.getElementById("head").innerHTML = "你的房间号为" + roomId + "你是白色";
+            }
+        }
     </script>
 </head>
 
@@ -246,7 +263,8 @@
 <div>
     <canvas width="640" id="canvas" onmousedown="play(event)" height="640">你的浏览器不支持HTML5 canvas  ，请使用 google chrome 浏览器 打开.
     </canvas>
-    <h1 id = "tips">请耐心等待另外一位玩家</h1>
+    <h2 id = "head"></h2>
+    <h2 id = "tips">请耐心等待另外一位玩家</h2>
 </div>
 
 </body>
