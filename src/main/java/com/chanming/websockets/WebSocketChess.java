@@ -38,8 +38,6 @@ public class WebSocketChess {
     @OnMessage
     public void onMessage(String message, Session session)
             throws IOException, InterruptedException {
-        System.out.println(total);
-        total += 1;
         Set<Session> session_list =null;
         session_list =session.getOpenSessions();
         List<String> roomList = session.getRequestParameterMap().get("roomId");
@@ -96,7 +94,12 @@ public class WebSocketChess {
     }
 
     @OnClose
-    public void onClose () {
+    public void onClose (Session session) {
+        String roomId = (String)session.getUserProperties().get("roomId");
+        Room room = roomMap.get(roomId);
+        if (room != null){
+            room.leaveRoom(session);
+        }
         System.out.println("Connection closed");
     }
 }

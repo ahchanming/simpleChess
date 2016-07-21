@@ -55,6 +55,12 @@ public abstract class Room {
         return false;
     }
 
+    public boolean leaveRoom(Session s){
+        sessions.remove(s);
+        nowNumber--;
+        return true;
+    }
+
     public void broadcast(String buffer){
         for (Session session : sessions){
             try{

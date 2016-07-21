@@ -17,7 +17,7 @@ public class DeamonThread implements Runnable {
         while (true){
             try{
                 System.out.println("RoomSize is[" + runContext.getRooms().size() + "]");
-                Thread.sleep(3000);
+                Thread.sleep(30000);
             }catch (Exception e){
 
             }
