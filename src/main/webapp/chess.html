@@ -166,7 +166,6 @@
         var roomId = prompt("请输入房间号", ""); //房间号
         host = document.location.host;
         host = "ws://" + host + "/chess?roomId=" + roomId;
-        //alert(host);
         var webSocket = new WebSocket(host);
         i = 0;
         while (!webSocket.readyState){
@@ -191,7 +190,11 @@
 
         function onMessage(event){
             //alert(event.data)
-            var action = JSON.parse(event.data);
+            result = JSON.parse(event.data);
+            if (result.success == false){
+                alert("系统异常" + event.data);
+            }
+            var action = result.model;
             if (action.code == "Start"){
                 startGame(action);
             }else if (action.code == "Chess"){

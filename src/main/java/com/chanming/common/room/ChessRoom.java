@@ -1,6 +1,7 @@
 package com.chanming.common.room;
 
 import com.chanming.common.ChessAction;
+import com.chanming.common.Result;
 import com.chanming.common.StartAction;
 import com.google.gson.Gson;
 
@@ -31,7 +32,10 @@ public class ChessRoom extends Room {
                 startAction.setDetail("White");
             }
             try {
-                session.getBasicRemote().sendText(new Gson().toJson(startAction));
+                Result result = new Result();
+                result.setSuccess(true);
+                result.setModel(startAction);
+                session.getBasicRemote().sendText(new Gson().toJson(result));
                 System.out.println("Send OK");
             }catch (Exception e){
                 System.out.println("SendText Error" + e.getMessage());
