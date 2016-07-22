@@ -99,6 +99,9 @@ public class WebSocketChess {
         Room room = roomMap.get(roomId);
         if (room != null){
             room.leaveRoom(session);
+            if (room.getNowNumber() <= 0){
+                roomMap.remove(roomId);
+            }
         }
         System.out.println("Connection closed");
     }
