@@ -1,5 +1,6 @@
 package com.chanming.common.room;
 
+import com.chanming.common.Action;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -74,6 +75,16 @@ public abstract class Room {
     public void fullEvent(){
 
     }
+
+    /**
+     * 判断一个ACTION是否合法
+     * @param action
+     * @return
+     */
+    public boolean vaildAction(Action action) {
+        return true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
