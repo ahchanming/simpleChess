@@ -67,7 +67,7 @@ public class ChessRoom extends Room {
             if (chessBoard[((ChessAction) action).getX()][((ChessAction) action).getY()] != 0){
                 return false;
             }
-            chessBoard[((ChessAction) action).getY()][((ChessAction) action).getY()] = ((ChessAction) action).getColor().equals("Black") ? -1 : 1;
+            chessBoard[((ChessAction) action).getX()][((ChessAction) action).getY()] = ((ChessAction) action).getColor().equals("Black") ? -1 : 1;
             return true;
         }
         return false;
