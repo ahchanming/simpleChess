@@ -2,6 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="css/chess.css" rel="stylesheet" type="text/css">
     <title></title>
     <style type="text/css">
         body {
@@ -39,6 +40,11 @@
         function drawRect() {//页面加载完毕调用函数，初始化棋盘
             canvas = document.getElementById("canvas");
             context = canvas.getContext("2d");
+            var board = new Image();
+            context.fillStyle = "#996600";
+            context.fillRect(0, 0, 640, 640);
+//            board.src= "images/board.jpg";
+//            context.drawImage(board, 0, 0, 640, 640);
             context.fillStyle = "#CCFFFF"
 //            context.strokeStyle = "orange"
 //            context.fillRect(0, 0, 640, 640);
@@ -48,7 +54,7 @@
 //            context.font="40px Arial";
 //            context.fillText("房间号:", 650, 45);
             //context.fillRect(650, 0, 650+60, 60);
-            context.strokeStyle = "orange"
+            context.strokeStyle = "white"
 
             for (var i = 0; i <= 640; i += 40) {//绘制棋盘的线
                 context.beginPath();
@@ -66,13 +72,17 @@
         }
 
         function getAbsoluteX(x){
+            canvas = document.getElementById("canvas");
+            var pos = getDomXY(canvas);
             var l = document.body.scrollLeft;
-            return parseInt((x + l - 20) / 40);
+            return parseInt((x - pos.x + l - 20) / 40);
         }
 
         function getAbsoluteY(y){
+            canvas = document.getElementById("canvas");
+            var pos = getDomXY(canvas);
             var h = document.body.scrollTop;
-            return parseInt((y + h - 20) / 40);
+            return parseInt((y - pos.y + h - 20) / 40);
         }
 
         function getRelativeX(x){
@@ -83,6 +93,17 @@
         function getRelativeY(y){
             //var h = document.body.scrollTop;
             return y * 40 + 20;
+        }
+         function getDomXY(a) {
+            for (var b = a.offsetLeft,
+                         c = a.offsetTop,
+                         d = a.offsetParent; null !== d;) b += d.offsetLeft,
+                    c += d.offsetTop,
+                    d = d.offsetParent;
+            return {
+                x: b,
+                y: c
+            }
         }
 
         function play(e) {//鼠标点击时发生
@@ -212,22 +233,30 @@
         var roomId = prompt("请输入房间号", ""); //房间号
         host = document.location.host;
         host = "ws://" + host + "/chess?roomId=" + roomId;
-        var webSocket = new WebSocket(host);
-        i = 0;
-        while (!webSocket.readyState){
-            alert("请耐心等待游戏开始");
-            if (i > 5){
-                alert("游戏链接失败");
-                break;
+        try{
+            var webSocket = new WebSocket(host);
+            webSocket.onopen = function(){
+                alert("链接成功");
+                sendStart();
             }
-            i++;
-        };
+        }catch(a){
+            alert(a);
+        }
+
+//        var webSocket = new WebSocket(host);
+//        i = 0;
+//        while (!webSocket.readyState){
+//            alert("请耐心等待游戏开始");
+//            if (i > 5){
+//                alert("游戏链接失败");
+//                break;
+//            }
+//            i++;
+//        };
 
         function sendStart(){
             webSocket.send("connect|This is a new Client");
         }
-
-        sendStart();
 
         webSocket.onmessage = function(event) {
             //alert("readMessage" + event.data);
@@ -310,10 +339,12 @@
 
 <body onload="drawRect()">
 <div>
-    <canvas width="640" id="canvas" onmousedown="play(event)" height="640">你的浏览器不支持HTML5 canvas  ，请使用 google chrome 浏览器 打开.
-    </canvas>
-    <h2 id = "head"></h2>
-    <h2 id = "tips">请耐心等待另外一位玩家</h2>
+    <div class="game-box">
+        <canvas width="640" id="canvas" onmousedown="play(event)" height="640">你的浏览器不支持HTML5 canvas  ，请使用 google chrome 浏览器 打开.
+        </canvas>
+        <h2 id = "head"></h2>
+        <h2 id = "tips">请耐心等待另外一位玩家</h2>
+    </div>
 </div>
 
 </body>

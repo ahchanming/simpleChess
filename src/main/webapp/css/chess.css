@@ -1,0 +1,13 @@
+body {
+    font-size: 12px;
+    line-height: 150%;
+    text-align: center;
+    background: url(../images/bg.jpg) repeat scroll 0% 0% transparent;
+    margin: 0;
+    position: relative;
+}
+.game-box {
+    width: 640px;
+    margin: 0 auto;
+    position: relative;
+}
