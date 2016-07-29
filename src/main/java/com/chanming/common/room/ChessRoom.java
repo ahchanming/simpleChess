@@ -38,7 +38,30 @@ public class ChessRoom extends Room {
     public void fullEvent(){
         System.out.println("Room[" + roomId + "] is full, Send Ready Message");
         int tmp = 0;
-        for (Session session : sessions){
+        for (Session session : sessions.keySet()){
+            StartAction startAction = new StartAction();
+            if (tmp == 0){
+                startAction.setDetail("Black");
+            }else{
+                startAction.setDetail("White");
+            }
+            try {
+                Result result = new Result();
+                result.setSuccess(true);
+                result.setModel(startAction);
+                session.getBasicRemote().sendText(new Gson().toJson(result));
+                System.out.println("Send OK");
+            }catch (Exception e){
+                System.out.println("SendText Error" + e.getMessage());
+            }
+            tmp++;
+        }
+    }
+
+    @Override
+    public void allReadyEvent(){
+        int tmp = 0;
+        for (Session session : sessions.keySet()){
             StartAction startAction = new StartAction();
             if (tmp == 0){
                 startAction.setDetail("Black");

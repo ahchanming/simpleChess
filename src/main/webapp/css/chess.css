@@ -11,3 +11,18 @@ body {
     margin: 0 auto;
     position: relative;
 }
+.btn-box {
+    padding-left:45px;
+}
+.btn-box a {
+    background: url(../images/btn-bg1.png) center 0 no-repeat;
+    height: 75px;
+    width: 205px;
+    cursor: pointer;
+    margin:0 30px;
+    display:block;
+    font: normal 22px/70px "Î¢ÈíÑÅºÚ";
+    float:left;
+    color: #480e00;
+    text-decoration: none;
+}

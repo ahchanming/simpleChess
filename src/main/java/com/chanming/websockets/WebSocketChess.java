@@ -63,6 +63,20 @@ public class WebSocketChess {
     }
 
     /**
+     * 处理下棋逻辑
+     * @param session
+     * @param message
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void doChess(Session session, String message) throws  IOException, InterruptedException{
+
+    }
+
+    public void doReady(Session session, String message) throws  IOException, InterruptedException{
+
+    }
+    /**
      * 处理CONNECT请求
      * @param session
      * @param message

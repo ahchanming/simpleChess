@@ -1,14 +1,12 @@
 package com.chanming.common.room;
 
 import com.chanming.common.Action;
+import com.chanming.common.context.UserStatus;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.websocket.Session;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by chanming on 16/7/14.
@@ -39,14 +37,15 @@ public abstract class Room {
     /**
      * 在游戏中的人员
      */
-    protected @Getter @Setter Set<Session> sessions;
+    protected @Getter @Setter
+    Map<Session, UserStatus> sessions;
 
     public boolean enterRoom(Session s){
         if (sessions == null){
-            sessions = new HashSet<Session>();
+            sessions = new HashMap<Session, UserStatus>();
         }
         if (nowNumber < totalNumber){
-            sessions.add(s);
+            sessions.put(s, new UserStatus(s));
             nowNumber++;
             if (nowNumber == totalNumber){
                 fullEvent();
@@ -63,7 +62,7 @@ public abstract class Room {
     }
 
     public void broadcast(String buffer){
-        for (Session session : sessions){
+        for (Session session : sessions.keySet()){
             try{
                 session.getBasicRemote().sendText(buffer);
             }catch (Exception e){
@@ -72,7 +71,17 @@ public abstract class Room {
         }
     }
 
+    /**
+     * 房间满人触发的事件
+     */
     public void fullEvent(){
+
+    }
+
+    /**
+     * 所有人都准备好的事件
+     */
+    public void allReadyEvent(){
 
     }
 
