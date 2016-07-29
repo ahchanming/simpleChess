@@ -44,8 +44,7 @@ public class WebSocketChess {
             throws IOException, InterruptedException {
         Set<Session> session_list =null;
         session_list =session.getOpenSessions();
-        List<String> roomList = session.getRequestParameterMap().get("roomId");
-        String roomId = roomList.get(0);
+        String roomId = getRoomId(session);
         if (message.startsWith("connect")){
             doConnect(session, message);
         }else if (message.startsWith("chess")){
@@ -59,7 +58,48 @@ public class WebSocketChess {
                 result.setModel(chessAction);
                 room.broadcast(new Gson().toJson(result));
             }
+        }else if (message.startsWith("ready")){
+            doReady(session, message);
+        }else if (message.startsWith("over")){
+            doReady(session, message);
         }
+    }
+
+    /**
+     * 处理ready事件
+     * @param session
+     * @param message
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private void doReady(Session session, String message) throws IOException, InterruptedException{
+        Room room = getRoom(session);
+        room.doReady(session);
+    }
+
+    private void doOver(Session session, String message) throws  IOException, InterruptedException{
+        Room room = getRoom(session);
+
+    }
+
+    /**
+     * 获取RoomId
+     * @param session
+     * @return
+     */
+    private String getRoomId(Session session){
+        List<String> roomList = session.getRequestParameterMap().get("roomId");
+        String roomId = roomList.get(0);
+        return roomId;
+    }
+
+    /**
+     * 获取房间
+     * @param session
+     * @return
+     */
+    private Room getRoom(Session session){
+        return roomMap.get(getRoomId(session));
     }
 
     /**

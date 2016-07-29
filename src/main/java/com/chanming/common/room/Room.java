@@ -1,14 +1,12 @@
 package com.chanming.common.room;
 
 import com.chanming.common.Action;
+import com.chanming.common.context.UserContext;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.websocket.Session;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by chanming on 16/7/14.
@@ -39,21 +37,30 @@ public abstract class Room {
     /**
      * 在游戏中的人员
      */
-    protected @Getter @Setter Set<Session> sessions;
+    protected @Getter @Setter
+    Map<Session, UserContext> sessions = new HashMap<Session, UserContext>();
 
     public boolean enterRoom(Session s){
-        if (sessions == null){
-            sessions = new HashSet<Session>();
-        }
         if (nowNumber < totalNumber){
-            sessions.add(s);
+            sessions.put(s, new UserContext(s));
             nowNumber++;
-            if (nowNumber == totalNumber){
-                fullEvent();
-            }
             return true;
         }
         return false;
+    }
+
+    public void doReady(Session s){
+        UserContext userContext = sessions.get(s);
+        userContext.setGameStatus(UserContext.GAME_STATUS.READY);
+        if (checkAllReady()){
+            startGame();
+        }
+    }
+
+    public void gameOver(Session s){
+        for (Map.Entry<Session, UserContext> entry : sessions.entrySet()){
+            entry.getValue().setGameStatus(UserContext.GAME_STATUS.PENDING);
+        }
     }
 
     public boolean leaveRoom(Session s){
@@ -63,13 +70,38 @@ public abstract class Room {
     }
 
     public void broadcast(String buffer){
-        for (Session session : sessions){
+        for (Session session : sessions.keySet()){
             try{
                 session.getBasicRemote().sendText(buffer);
             }catch (Exception e){
                 System.out.println("Error\n");
             }
         }
+    }
+
+    /**
+     * 游戏开始事件
+     */
+    public void startGame(){
+        for (Map.Entry<Session, UserContext> each : sessions.entrySet()){
+            each.getValue().setGameStatus(UserContext.GAME_STATUS.RUNNING);
+        }
+    }
+
+    /**
+     * 检查所有的选手是否已经准备完成
+     * @return
+     */
+    public boolean checkAllReady(){
+        if (nowNumber < totalNumber){
+            return false;
+        }
+        for (Map.Entry<Session, UserContext> each : sessions.entrySet()){
+            if (!each.getValue().isReady()){
+                return false;
+            }
+        }
+        return true;
     }
 
     public void fullEvent(){

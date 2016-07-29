@@ -19,6 +19,7 @@
         var img_b_now = new Image();
         var img_w_now = new Image();
         var allowPlay = false;//是否开始
+        var isReady = false;
         var host;
         img_b.src = "images/b.png";//黑棋图片
         img_b_now.src = "images/b_now.png";//最新的黑棋图片
@@ -225,6 +226,8 @@
                     alert("黑棋赢了");
                 }
                 isWell = true;//设置该局棋盘已经赢了，不可以再走了
+                sendOverMsg();
+                isReady = false;
             }
         }
 
@@ -297,6 +300,17 @@
             webSocket.send("chess" + chessInfoStr);
         }
 
+        function sendReadyMsg(){
+            if (isReady == false){
+                webSocket.send("ready");
+            }
+            isReady = true;
+        }
+
+        function sendOverMsg(){
+            webSocket.send("over");
+        }
+
         function recieveChessMsg(action){
             if (action.color == "White"){
                 drawChess(1, action.x, action.y);
@@ -342,7 +356,7 @@
     <div class="game-box">
         <canvas width="640" id="canvas" onmousedown="play(event)" height="640">你的浏览器不支持HTML5 canvas  ，请使用 google chrome 浏览器 打开.
         </canvas>
-        <div class = "btn-box"><a>准备好了</a></div>
+        <div class = "btn-box"><a onclick="sendReadyMsg()">准备好了</a></div>
         <h2 id = "head"></h2>
         <h2 id = "tips">请耐心等待另外一位玩家</h2>
     </div>

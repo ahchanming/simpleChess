@@ -5,6 +5,8 @@ import com.chanming.common.ChessAction;
 import com.chanming.common.Result;
 import com.chanming.common.StartAction;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.util.Date;
@@ -18,6 +20,7 @@ public class ChessRoom extends Room {
     private Integer chessBoard[][] = new Integer[16][16];
     private int maxSize = 16;
     private ChessAction lastChessAction;
+    private static Logger logger = LoggerFactory.getLogger(ChessRoom.class);
 
     private void initChessBoard(){
         for (int i = 0; i < maxSize; ++i){
@@ -38,7 +41,7 @@ public class ChessRoom extends Room {
     public void fullEvent(){
         System.out.println("Room[" + roomId + "] is full, Send Ready Message");
         int tmp = 0;
-        for (Session session : sessions){
+        for (Session session : sessions.keySet()){
             StartAction startAction = new StartAction();
             if (tmp == 0){
                 startAction.setDetail("Black");
@@ -56,6 +59,31 @@ public class ChessRoom extends Room {
             }
             tmp++;
         }
+    }
+
+    @Override
+    public void startGame(){
+        logger.info("Room[" + roomId + "] is allReady, Send GameStart Message!");
+        int tmp = 0;
+        for (Session session : sessions.keySet()){
+            StartAction startAction = new StartAction();
+            if (tmp == 0){
+                startAction.setDetail("Black");
+            }else{
+                startAction.setDetail("White");
+            }
+            try {
+                Result result = new Result();
+                result.setSuccess(true);
+                result.setModel(startAction);
+                session.getBasicRemote().sendText(new Gson().toJson(result));
+                logger.info("Send Start Message OK");
+            }catch (Exception e){
+                logger.error("Send Start Message Error");
+            }
+            tmp++;
+        }
+        super.startGame();
     }
 
     @Override
