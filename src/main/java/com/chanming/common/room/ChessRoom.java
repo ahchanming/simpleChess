@@ -4,12 +4,14 @@ import com.chanming.common.Action;
 import com.chanming.common.ChessAction;
 import com.chanming.common.Result;
 import com.chanming.common.StartAction;
+import com.chanming.common.context.UserContext;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by chanming on 16/7/14.
@@ -84,6 +86,18 @@ public class ChessRoom extends Room {
             tmp++;
         }
         super.startGame();
+    }
+
+    @Override
+    public void doOver(Session s){
+        for (Map.Entry<Session, UserContext> entry : sessions.entrySet()){
+            entry.getValue().setGameStatus(UserContext.GAME_STATUS.PENDING);
+        }
+        for (int i = 0; i < maxSize; ++i){
+            for (int j = 0; j < maxSize; ++j){
+                chessBoard[i][j] = 0;
+            }
+        }
     }
 
     @Override

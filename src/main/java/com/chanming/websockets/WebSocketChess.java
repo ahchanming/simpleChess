@@ -61,7 +61,7 @@ public class WebSocketChess {
         }else if (message.startsWith("ready")){
             doReady(session, message);
         }else if (message.startsWith("over")){
-            doReady(session, message);
+            doOver(session, message);
         }
     }
 
@@ -79,7 +79,8 @@ public class WebSocketChess {
 
     private void doOver(Session session, String message) throws  IOException, InterruptedException{
         Room room = getRoom(session);
-
+        room.doOver(session);
+        logger.info("doOver Action");
     }
 
     /**
