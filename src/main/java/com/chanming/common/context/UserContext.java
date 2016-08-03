@@ -18,13 +18,13 @@ public class UserContext {
     }
 
     /**
-     * ÓÎÏ·×´Ì¬
+     * æ¸¸æˆçŠ¶æ€
      */
     private @Getter @Setter int gameStatus;
     public interface GAME_STATUS {int PENDING  = 0; int READY = 1; int RUNNING = 2;}
 
     /**
-     * ÊÇ·ñ×¼±¸Íê³É
+     * æ˜¯å¦å·²ç»å‡†å¤‡
      */
     public boolean isReady(){
         return gameStatus == GAME_STATUS.READY;

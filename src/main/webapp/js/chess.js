@@ -16,7 +16,7 @@ var Gomoku = {
 
         //房间号
         gmk.roomId = prompt("请输入房间号", "default");
-        gmk.host = "ws://" + document.location.host + "/chess?roomId=" + gmk.roomId;
+        gmk.host = "ws://" + document.location.host + "/chess/chess?roomId=" + gmk.roomId;
 
         gmk.hanlderEvent = function(result){
             if (result.success == false){
