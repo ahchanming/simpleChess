@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<meta charset="utf-8">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -9,364 +10,10 @@
             margin: 10px;
         }
     </style>
-    <script type="text/javascript" src="js/ds.js"></script>
-    <script type="text/javascript" src="js/chess.js"></script>
-    <script type="text/javascript">
-        var canvas;
-        var context;
-        var isWhite = true;//设置是否该轮到白棋
-        var isWell = false;//设置该局棋盘是否赢了，如果赢了就不能再走了
-        var myTurn = true;//check is my turn
-        var img_b = new Image();
-        var img_b_now = new Image();
-        var img_w_now = new Image();
-        var allowPlay = false;//是否开始
-        var isReady = false;
-        var host;
-        img_b.src = "images/b.png";//黑棋图片
-        img_b_now.src = "images/b_now.png";//最新的黑棋图片
-        var img_w = new Image();
-        img_w.src = "images/w.png";//白棋图片
-        img_w_now.src = "images/w_now.png"; //最新的白棋图片
-        var last_x = -1;
-        var last_y = -1;
-
-
-        var chessData = new Array(15);//这个为棋盘的二维数组用来保存棋盘信息，初始化0为没有走过的，1为白棋走的，2为黑棋走的
-        for (var x = 0; x < 15; x++) {
-            chessData[x] = new Array(15);
-            for (var y = 0; y < 15; y++) {
-                chessData[x][y] = 0;
-            }
-        }
-
-        function drawRect() {//页面加载完毕调用函数，初始化棋盘
-            canvas = document.getElementById("canvas");
-            context = canvas.getContext("2d");
-            context.clearRect(0, 0, 640, 640);
-            var board = new Image();
-            context.fillStyle = "#996600";
-            context.fillRect(0, 0, 640, 640);
-//            board.src= "images/board.jpg";
-//            context.drawImage(board, 0, 0, 640, 640);
-            context.fillStyle = "#CCFFFF"
-            context.strokeStyle = "white"
-
-            for (var i = 0; i <= 640; i += 40) {//绘制棋盘的线
-                context.beginPath();
-                context.moveTo(0, i);
-                context.lineTo(640, i);
-                context.closePath();
-                context.stroke();
-
-                context.beginPath();
-                context.moveTo(i, 0);
-                context.lineTo(i, 640);
-                context.closePath();
-                context.stroke();
-            }
-        }
-
-        function getAbsoluteX(x){
-            canvas = document.getElementById("canvas");
-            var pos = getDomXY(canvas);
-            var l = document.body.scrollLeft;
-            return parseInt((x - pos.x + l - 20) / 40);
-        }
-
-        function getAbsoluteY(y){
-            canvas = document.getElementById("canvas");
-            var pos = getDomXY(canvas);
-            var h = document.body.scrollTop;
-            return parseInt((y - pos.y + h - 20) / 40);
-        }
-
-        function getRelativeX(x){
-            //var l = document.body.scrollLeft;
-            return x * 40  + 20;
-        }
-
-        function getRelativeY(y){
-            //var h = document.body.scrollTop;
-            return y * 40 + 20;
-        }
-
-         function getDomXY(a) {
-            for (var b = a.offsetLeft,
-                         c = a.offsetTop,
-                         d = a.offsetParent; null !== d;) b += d.offsetLeft,
-                    c += d.offsetTop,
-                    d = d.offsetParent;
-            return {
-                x: b,
-                y: c
-            }
-        }
-
-        function play(e) {//鼠标点击时发生
-            if (allowPlay == false){
-                alert("游戏还没开始,请耐心等待咯");
-                return;
-            }
-            if (myTurn == false){
-                alert("请耐心等待对方下完");
-                return;
-            }
-
-            var x = getAbsoluteX(e.clientX);
-            var y = getAbsoluteY(e.clientY);
-
-            if (chessData[x][y] != 0) {//判断该位置是否被下过了
-                alert("你不能在这个位置下棋");
-                return;
-            }
-
-            if (isWhite) {
-                sendChessMsg("White", x, y);
-            }
-            else {
-                sendChessMsg("Black", x, y);
-            }
-        }
-
-        function drawChess(chess, x, y) {//参数为，棋（1为白棋，2为黑棋），数组位置
-            if (isWell == true) {
-                alert("已经结束了，如果需要重新玩，请刷新");
-                return;
-            }
-            if (x >= 0 && x < 15 && y >= 0 && y < 15) {
-                if (chess == 1) {
-                    if (last_x > 0 && last_y > 0){
-                        context.drawImage(img_b, getRelativeX(last_x), getRelativeY(last_y));
-                    }
-                    context.drawImage(img_w_now, getRelativeX(x), getRelativeY(y));
-                    chessData[x][y] = 1;
-                }
-                else {
-                    if (last_x > 0 && last_y > 0){
-                        context.drawImage(img_w, getRelativeX(last_x), getRelativeY(last_y));
-                    }
-                    context.drawImage(img_b_now, getRelativeX(x), getRelativeY(y));
-                    chessData[x][y] = 2;
-                }
-                judge(x, y, chess);
-                last_x = x;
-                last_y = y;
-            }
-        }
-
-        function judge(x, y, chess) {//判断该局棋盘是否赢了
-            var count1 = 0;
-            var count2 = 0;
-            var count3 = 0;
-            var count4 = 0;
-
-            //左右判断
-            for (var i = x; i >= 0; i--) {
-                if (chessData[i][y] != chess) {
-                    break;
-                }
-                count1++;
-            }
-            for (var i = x + 1; i < 15; i++) {
-                if (chessData[i][y] != chess) {
-                    break;
-                }
-                count1++;
-            }
-            //上下判断
-            for (var i = y; i >= 0; i--) {
-                if (chessData[x][i] != chess) {
-                    break;
-                }
-                count2++;
-            }
-            for (var i = y + 1; i < 15; i++) {
-                if (chessData[x][i] != chess) {
-                    break;
-                }
-                count2++;
-            }
-            //左上右下判断
-            for (var i = x, j = y; i >= 0, j >= 0; i--, j--) {
-                if (chessData[i][j] != chess) {
-                    break;
-                }
-                count3++;
-            }
-            for (var i = x + 1, j = y + 1; i < 15, j < 15; i++, j++) {
-                if (chessData[i][j] != chess) {
-                    break;
-                }
-                count3++;
-            }
-            //右上左下判断
-            for (var i = x, j = y; i >= 0, j < 15; i--, j++) {
-                if (chessData[i][j] != chess) {
-                    break;
-                }
-                count4++;
-            }
-            for (var i = x + 1, j = y - 1; i < 15, j >= 0; i++, j--) {
-                if (chessData[i][j] != chess) {
-                    break;
-                }
-                count4++;
-            }
-
-            if (count1 >= 5 || count2 >= 5 || count3 >= 5 || count4 >= 5) {
-                if (chess == 1) {
-                    alert("白棋赢了");
-                }
-                else {
-                    alert("黑棋赢了");
-                }
-                isWell = true;//设置该局棋盘已经赢了，不可以再走了
-                sendOverMsg();
-                isReady = false;
-            }
-        }
-
-
-
-        var roomId = prompt("请输入房间号", ""); //房间号
-        host = document.location.host;
-        host = "ws://" + host + "/chess?roomId=" + roomId;
-        try{
-            var webSocket = new WebSocket(host);
-            webSocket.onopen = function(){
-                alert("链接成功");
-                sendStart();
-            }
-        }catch(a){
-            alert(a);
-        }
-
-//        var webSocket = new WebSocket(host);
-//        i = 0;
-//        while (!webSocket.readyState){
-//            alert("请耐心等待游戏开始");
-//            if (i > 5){
-//                alert("游戏链接失败");
-//                break;
-//            }
-//            i++;
-//        };
-
-        function sendStart(){
-            webSocket.send("connect|This is a new Client");
-        }
-
-        webSocket.onmessage = function(event) {
-            //alert("readMessage" + event.data);
-            onMessage(event)
-        };
-
-        function onMessage(event){
-            //alert(event.data)
-            result = JSON.parse(event.data);
-            if (result.success == false){
-                alert("系统异常" + event.data);
-            }
-            var action = result.model;
-            if (action.code == "Start"){
-                startGame(action);
-            }else if (action.code == "Chess"){
-                recieveChessMsg(action);
-            }
-        }
-
-        function initData(){
-            allowPlay = true;
-            isWell = false;
-            isWhite = true;
-            last_x = -1;
-            last_y = -1;
-            for (var x = 0; x < 15; x++) {
-                for (var y = 0; y < 15; y++) {
-                    chessData[x][y] = 0;
-                }
-            }
-        }
-
-        function startGame(action){
-            allowPlay = true;
-            isWell = false;
-            if (action.detail == "White"){
-                myTurn = true;
-            }else{
-                myTurn = false;
-            }
-            changeHead();
-            changeTip();
-        }
-
-        function sendChessMsg(color, x, y){
-            var chessAction = new Object();
-            chessAction.color = color;
-            chessAction.x = x;
-            chessAction.y = y;
-            var chessInfoStr = JSON.stringify(chessAction);
-            webSocket.send("chess" + chessInfoStr);
-        }
-
-        function sendReadyMsg(){
-            if (isReady == false){
-                webSocket.send("ready");
-                initData();
-                drawRect();
-            }
-            isReady = true;
-            document.getElementById("tips").innerHTML = "请耐心等待下一位玩家";
-        }
-
-        function sendOverMsg(){
-            isReady = false;
-            document.getElementById("tips").innerHTML = "请准备";
-            webSocket.send("over");
-        }
-
-        function recieveChessMsg(action){
-            if (action.color == "White"){
-                drawChess(1, action.x, action.y);
-                if (isWhite == true){
-                    isWhite = false;
-                }else{
-                    isWhite = true;
-                }
-                myTurn = !myTurn;
-                changeTip();
-            }else{
-                drawChess(2, action.x, action.y);
-                if (isWhite == false){
-                    isWhite = true;
-                }else{
-                    isWhite = false;
-                }
-                myTurn = !myTurn;
-                changeTip();
-            }
-        }
-
-        function changeTip(){
-            if (myTurn == true){
-                document.getElementById("tips").innerHTML = "这是你的回合";
-            }else{
-                document.getElementById("tips").innerHTML = "等待对方下棋";
-            }
-        }
-
-        function changeHead(){
-            if (myTurn == false){
-                document.getElementById("head").innerHTML = "你的房间号为" + roomId + "你是黑色";
-            }else{
-                document.getElementById("head").innerHTML = "你的房间号为" + roomId + "你是白色";
-            }
-        }
-    </script>
+    <script type="text/javascript" src="js/ds.js" charset="gb2312"></script>
+    <script type="text/javascript" src="js/chess.js" charset="gb2312"></script>
 </head>
 
-<body onload="drawRect()">
 <div>
     <div class="game-box">
         <!--<textarea type="textarea" name="firstname" style="width:630px;overflow:scroll; overflow-x:hidden;  background-color: #996600 ">hello world </br> world</textarea>-->
@@ -374,8 +21,24 @@
         </canvas>
         <div class = "btn-box"><a onclick="sendReadyMsg()">准备好了</a></div>
         <div class = "btn-box"><a onclick="sendReadyMsg()">悔棋</a></div>
+        <h2 id = "head"></h2>
+        <h2 id = "tips">请耐心等待另外一位玩家</h2>
     </div>
 </div>
 
 </body>
+
+<script type="text/javascript">
+    canvas = document.getElementById("canvas");
+    context = canvas.getContext("2d");
+    var gmk = new Gomoku.createNew(canvas);
+
+    function play(e){
+        gmk.play(e);
+    }
+
+    function sendReadyMsg(){
+        gmk.sendReadyMsg();
+    }
+</script>
 </html>

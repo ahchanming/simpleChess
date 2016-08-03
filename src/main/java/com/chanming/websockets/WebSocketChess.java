@@ -48,6 +48,7 @@ public class WebSocketChess {
         if (message.startsWith("connect")){
             doConnect(session, message);
         }else if (message.startsWith("chess")){
+            logger.info("DoChessAction" + message);
             String content = message.substring(5);
             ChessAction chessAction = new Gson().fromJson(content, ChessAction.class);
             chessAction.setCode("Chess");
@@ -73,6 +74,7 @@ public class WebSocketChess {
      * @throws InterruptedException
      */
     private void doReady(Session session, String message) throws IOException, InterruptedException{
+        logger.info("doReady Message");
         Room room = getRoom(session);
         room.doReady(session);
     }
@@ -134,8 +136,13 @@ public class WebSocketChess {
 
 
     @OnOpen
-    public void onOpen () {
-        System.out.println("Client connected");
+    public void onOpen (Session session) {
+        try {
+            doConnect(session, null);
+        }catch (Exception e){
+            logger.error("Error",e);
+        }
+        logger.info("Client connected");
     }
 
     @OnClose

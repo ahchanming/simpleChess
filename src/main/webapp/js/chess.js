@@ -14,6 +14,24 @@ var Gomoku = {
     createNew : function(canvas){
         var gmk = {};
 
+        //房间号
+        gmk.roomId = prompt("请输入房间号", "default");
+        gmk.host = "ws://" + document.location.host + "/chess?roomId=" + gmk.roomId;
+
+        gmk.hanlderEvent = function(result){
+            if (result.success == false){
+                alert("系统异常" + event.data);
+            }
+            var action = result.model;
+            if (action.code == "Start"){
+                gmk.startGame(action);
+            }else if (action.code == "Chess"){
+                gmk.recieveChessMsg(action);
+            }
+        }
+
+        gmk.communicator = Communicator.createNew(gmk.host, gmk.hanlderEvent);
+
         gmk.canvas = canvas;
         gmk.ct = canvas.getContext("2d");
 
@@ -29,12 +47,34 @@ var Gomoku = {
         //我的回合
         gmk.myTurn = false;
 
-        gmk.whiteChessBrush = ChessBrush.createNew(gmk.ct, "images/w.png");
-        gmk.blackChessBrush = ChessBrush.createNew(gmk.ct, "images/b.png");
+        gmk.img_b = new Image();
+        gmk.img_b.src = "../images/b.png";
+
+        gmk.img_w = new Image();
+        gmk.img_w.src = "../images/w.png";
+
+        gmk.img_b_now = new Image();
+        gmk.img_b_now.src = "../images/b_now.png";
+
+        gmk.img_w_now = new Image();
+        gmk.img_w_now.src = "../images/w_now.png";
+
+        gmk.whiteChessBrush = ChessBrush.createNew(gmk.ct, gmk.img_w);
+        gmk.blackChessBrush = ChessBrush.createNew(gmk.ct, gmk.img_b);
+        gmk.whiteNowChessBrush = ChessBrush.createNew(gmk.ct, gmk.img_w_now);
+        gmk.blackNowChessBrush = ChessBrush.createNew(gmk.ct, gmk.img_b_now);
+
+        gmk.last_x = -1;
+        gmk.last_y = -1;
 
         //棋盘刷子
         gmk.boardBrush = BoardBrush.createNew(gmk.ct);
 
+        //准备状态
+        gmk.isReady = false;
+
+        //我的颜色
+        gmk.myColor = null;
 
         gmk.init = function(){
             for (var x = 0; x < 15; ++x){
@@ -43,6 +83,8 @@ var Gomoku = {
                     gmk.chessData[x][y] = 0;
                 }
             }
+            gmk.last_x = -1;
+            gmk.last_y = -1;
             gmk.boardBrush.show();
         }
 
@@ -60,34 +102,43 @@ var Gomoku = {
             return parseInt((y - pos.y + h - 20) / 40);
         }
 
+        gmk.getRelativeX = function(x){
+            return x * 40 + 20;
+        }
+
+        gmk.getRelativeY = function(y){
+            return y * 40 + 20;
+        }
+
         gmk.play = function(e){
             //alert("play hahaha");
+            if (!gmk.allowPlay){
+                alert("游戏尚未开始");
+                return;
+            }
+
+            if (!gmk.myTurn){
+                alert("不是你的回合");
+                return;
+            }
+
             var x = gmk.getAbsoluteX(e.clientX);
             var y = gmk.getAbsoluteY(e.clientY);
             if (gmk.chessData[x][y] != 0){
                 return [false, "你不能在这个位置下棋"];
             }
-            gmk.whiteChessBrush.drawChess(x, y);
-        }
 
-        gmk.hanlderEvent = function(result){
-            if (result.success == false){
-                alert("系统异常" + event.data);
-            }
-            var action = result.model;
-            if (action.code == "Start"){
-                gmk.startGame(action);
-            }else if (action.code == "Chess"){
-                gmk.recieveChessMsg(action);
-            }
+            gmk.sendChessMsg(gmk.myColor, x, y);
         }
 
         gmk.startGame = function(action){
-            gmt.allowPlay = true;
+            gmk.allowPlay = true;
             if (action.detail == "White"){
-                gmt.myTurn = true;
+                gmk.myColor = "White";
+                gmk.myTurn = true;
             }else{
-                gmt.myTurn = false;
+                gmk.myColor = "Black";
+                gmk.myTurn = false;
             }
             gmk.changeHead();
             gmk.changeTip();
@@ -95,15 +146,52 @@ var Gomoku = {
 
         gmk.recieveChessMsg = function(action){
             if (action.color == "White"){
-                gmk.whiteChessBrush.drawChess(action.x, action.y);
+                if (gmk.last_x != -1 && gmk.last_y != -1){
+                    gmk.blackChessBrush.drawChess(gmk.getRelativeX(gmk.last_x), gmk.getRelativeY(gmk.last_y));
+                }
+                gmk.whiteNowChessBrush.drawChess(gmk.getRelativeX(action.x), gmk.getRelativeY(action.y));
+                gmk.chessData[action.x][action.y] = 1;
             }else{
-                gmk.blackChessBrush.drawChess(action.x, action.y);
+                if (gmk.last_x != -1 && gmk.last_y != -1){
+                    gmk.whiteChessBrush.drawChess(gmk.getRelativeX(gmk.last_x), gmk.getRelativeY(gmk.last_y));
+                }
+                gmk.blackNowChessBrush.drawChess(gmk.getRelativeX(action.x), gmk.getRelativeY(action.y));
+                gmk.chessData[action.x][action.y] = -1;
             }
+            gmk.judge(action.x, action.y, action.color == "White" ? 1 : -1);
+            gmk.last_x = action.x;
+            gmk.last_y = action.y;
+            gmk.myTurn = !gmk.myTurn;
             gmk.changeTip();
+
+        }
+
+        gmk.sendReadyMsg = function(){
+            if (gmk.isReady == false){
+                gmk.init();
+                gmk.isReady = true;
+                gmk.communicator.sendMessage("ready");
+                document.getElementById("tips").innerHTML = "请耐心等待下一位玩家";
+            }
+        }
+
+        gmk.sendChessMsg = function(color, x, y){
+            var chessAction = new Object();
+            chessAction.color = color;
+            chessAction.x = x;
+            chessAction.y = y;
+            var chessInfoStr = JSON.stringify(chessAction);
+            gmk.communicator.sendMessage("chess" + chessInfoStr);
+        }
+
+        gmk.sendOverMsg = function(){
+            gmk.isReady = false;
+            document.getElementById("tips").innerHTML = "请准备";
+            gmk.communicator.sendMessage("over");
         }
 
         gmk.changeTip = function(){
-            if (myTurn == true){
+            if (gmk.myTurn == true){
                 document.getElementById("tips").innerHTML = "这是你的回合";
             }else{
                 document.getElementById("tips").innerHTML = "等待对方下棋";
@@ -111,13 +199,84 @@ var Gomoku = {
         }
 
         gmk.changeHead = function(){
-            if (myTurn == false){
-                document.getElementById("head").innerHTML = "你的房间号为" + roomId + "你是黑色";
+            if (gmk.myTurn == false){
+                document.getElementById("head").innerHTML = "你的房间号为" + gmk.roomId + "你是黑色";
             }else{
-                document.getElementById("head").innerHTML = "你的房间号为" + roomId + "你是白色";
+                document.getElementById("head").innerHTML = "你的房间号为" + gmk.roomId + "你是白色";
             }
         }
 
+        gmk.judge = function(x, y, chess){
+            var count1 = 0;
+            var count2 = 0;
+            var count3 = 0;
+            var count4 = 0;
+
+            //左右判断
+            for (var i = x; i >= 0; i--) {
+                if (gmk.chessData[i][y] != chess) {
+                    break;
+                }
+                count1++;
+            }
+            for (var i = x + 1; i < 15; i++) {
+                if (gmk.chessData[i][y] != chess) {
+                    break;
+                }
+                count1++;
+            }
+            //上下判断
+            for (var i = y; i >= 0; i--) {
+                if (gmk.chessData[x][i] != chess) {
+                    break;
+                }
+                count2++;
+            }
+            for (var i = y + 1; i < 15; i++) {
+                if (gmk.chessData[x][i] != chess) {
+                    break;
+                }
+                count2++;
+            }
+            //左上右下判断
+            for (var i = x, j = y; i >= 0, j >= 0; i--, j--) {
+                if (gmk.chessData[i][j] != chess) {
+                    break;
+                }
+                count3++;
+            }
+            for (var i = x + 1, j = y + 1; i < 15, j < 15; i++, j++) {
+                if (gmk.chessData[i][j] != chess) {
+                    break;
+                }
+                count3++;
+            }
+            //右上左下判断
+            for (var i = x, j = y; i >= 0, j < 15; i--, j++) {
+                if (gmk.chessData[i][j] != chess) {
+                    break;
+                }
+                count4++;
+            }
+            for (var i = x + 1, j = y - 1; i < 15, j >= 0; i++, j--) {
+                if (gmk.chessData[i][j] != chess) {
+                    break;
+                }
+                count4++;
+            }
+
+            if (count1 >= 5 || count2 >= 5 || count3 >= 5 || count4 >= 5) {
+                if (chess == 1) {
+                    alert("白棋赢了");
+                }
+                else {
+                    alert("黑棋赢了");
+                }
+                gmk.allowPlay = false;
+                gmk.sendOverMsg();
+                gmk.isReady = false;
+            }
+        }
         return gmk;
     }
 }
@@ -136,8 +295,7 @@ var ChessBrush = {
     createNew : function(ct, pic){
         var cb = {};
         cb.ct = ct;
-        cb.pic = new Image();
-        cb.pic.scr = pic;
+        cb.pic = pic;
         cb.drawChess = function(x, y){
             cb.ct.drawImage(cb.pic, x, y);
         }
@@ -203,9 +361,9 @@ var Stack = {
 }
 
 var Communicator = {
-    createNew : function(hanlder){
+    createNew : function(host, handler){
         net = {};
-        net.hanlder = hanlder;
+        net.handler = handler;
         try{
             net.webSocket = new WebSocket(host);
             net.webSocket.onopen = function(){
@@ -215,16 +373,24 @@ var Communicator = {
             return null;
         }
 
-        net.parse = function(){
-            result = JSON.parse(data);
+        net.parse = function(data){
+            var result = JSON.parse(data);
+            return result;
         }
 
         net.webSocket.onmessage = function(event){
-            action = net.parse(event.data);
-            if (net.hanlder && net.hanlder == "function"){
-                net.hanlder(action);
+            var result = net.parse(event.data);
+            if (net.handler && typeof(net.handler) == "function"){
+                net.handler(result);
             }
         }
 
+        net.sendMessage = function(data){
+            if (data){
+                net.webSocket.send(data);
+            }
+        }
+
+        return net;
     }
 }
